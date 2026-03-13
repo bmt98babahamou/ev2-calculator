@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#007BFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EV2 Plaque">
+<link rel="manifest" id="manifestLink">
+<title>EV2 Essai Plaque</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+/* ── VARIABLES ── */
+:root {
+  --acc: #007BFF;
+  --bg: linear-gradient(135deg,#f0f4ff,#d9e4ff);
+  --card: #fff; --text: #222; --sub: #666;
+  --border: #ccc; --inp: #fff;
+  --hist: #e9ecef; --th: #ddd; --tdbr: #aaa;
+  --hover: #e8f0fe; --mod1: #f0f4ff;
+}
+body.dark {
+  --bg: linear-gradient(135deg,#1a1a2e,#16213e);
+  --card: #1e2a3a; --text: #e0e8ff; --sub: #aab4cc;
+  --border: #334466; --inp: #162032;
+  --hist: #162032; --th: #253045; --tdbr: #334466;
+  --hover: #1a2e4a; --mod1: #1a2e44;
+}
+*{box-sizing:border-box;}
+body{font-family:Arial,sans-serif;margin:0;padding:10px;background:var(--bg);color:var(--text);transition:background .4s,color .4s;min-height:100vh;}
+
+/* ── COMPANY BANNER ── */
+.banner{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:12px;padding:10px 14px;margin-bottom:8px;box-shadow:0 2px 10px rgba(0,0,0,.08);border-left:5px solid var(--acc);transition:background .4s,border-color .4s;}
+.banner-logo{width:48px;height:48px;border-radius:10px;background:#f0f4ff;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;}
+.banner-logo img{width:100%;height:100%;object-fit:contain;}
+.banner-name{font-size:16px;font-weight:bold;color:var(--text);}
+.banner-sub{font-size:12px;color:var(--sub);}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.topbar h2{margin:0;font-size:18px;color:var(--text);}
+.topbar-btns{display:flex;gap:7px;}
+.icon-btn{background:none;border:2px solid var(--text);color:var(--text);border-radius:50%;width:36px;height:36px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;padding:0;margin:0;}
+.icon-btn:hover{transform:scale(1.1);box-shadow:none;}
+.install-btn{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;display:none;align-items:center;gap:4px;margin:0;}
+.install-btn.show{display:flex;}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0;}
+.stat{background:var(--card);border:2px solid var(--acc);border-radius:10px;padding:9px 12px;text-align:center;transition:background .4s,border .4s;}
+.stat .sv{font-size:21px;font-weight:bold;color:var(--acc);}
+.stat .sl{font-size:11px;color:var(--sub);margin-top:2px;}
+.stat.ok{border-color:#28a745;} .stat.ok .sv{color:#28a745;}
+.stat.nok{border-color:#dc3545;} .stat.nok .sv{color:#dc3545;}
+
+/* ── PROJECT SECTION ── */
+.project-sec{background:var(--card);border-radius:12px;padding:11px 13px;margin-bottom:10px;border:1.5px solid var(--border);transition:background .4s;}
+.sec-title{font-size:12px;font-weight:bold;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pgrid label{margin-top:0;font-size:14px;color:var(--text);}
+.pgrid input,.pgrid select{font-size:14px;padding:7px;margin-top:3px;}
+
+/* ── INPUTS ── */
+label{display:block;margin-top:10px;font-size:17px;color:var(--text);}
+input[type=text],input[type=date],input[type=password],textarea,select{
+  padding:10px;margin-top:5px;width:100%;font-size:17px;
+  border-radius:8px;border:1.5px solid var(--border);
+  background:var(--inp);color:var(--text);transition:all .2s;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--acc);box-shadow:0 0 7px rgba(0,123,255,.3);outline:none;}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;}
+button{font-size:15px;padding:11px 13px;cursor:pointer;border:none;border-radius:8px;transition:all .3s;margin-top:8px;}
+button:hover{transform:scale(1.04);box-shadow:0 4px 10px rgba(0,0,0,.2);}
+.bc{background:var(--acc);color:#fff;flex:1;}
+.bn{background:#dc3545;color:#fff;flex:1;}
+.bp{background:#28a745;color:#fff;flex:1;}
+.bx{background:#1D6F42;color:#fff;flex:1;}
+.bd{background:#ff4444;color:#fff;padding:5px 9px;margin-top:0;}
+.exp-row{display:flex;gap:6px;margin-top:4px;}
+.exp-row button{margin-top:0;}
+
+/* ── RESULT CARD ── */
+.res-card{margin-top:13px;border-radius:14px;overflow:hidden;opacity:0;transform:translateY(12px);transition:all .5s ease;box-shadow:0 4px 20px rgba(0,0,0,.1);display:none;}
+.res-card.show{opacity:1;transform:translateY(0);display:block;}
+.res-head{padding:11px 15px;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:13px;}
+.res-body{background:var(--card);padding:13px 15px;border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;}
+.res-vals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px;}
+.rv{text-align:center;padding:9px 5px;border-radius:10px;background:var(--hist);}
+.rv .rl{font-size:11px;color:var(--sub);margin-bottom:3px;}
+.rv .rn{font-size:19px;font-weight:bold;}
+
+/* ── CHART ── */
+.chart-sec{background:var(--card);border-radius:12px;padding:13px;margin-top:14px;border:1.5px solid var(--border);transition:background .4s;display:none;}
+.chart-sec.show{display:block;}
+.chart-sec h4{margin:0 0 9px;color:var(--text);font-size:14px;}
+.chart-wrap{position:relative;height:200px;}
+
+/* ── HISTORY ── */
+.history{margin-top:22px;padding:10px;background:var(--hist);border-radius:10px;transition:background .4s;}
+.history h3{color:var(--text);margin-top:4px;}
+.history table{display:block;overflow-x:auto;white-space:nowrap;width:100%;border-collapse:collapse;margin-top:9px;}
+th,td{border:1px solid var(--tdbr);padding:7px;text-align:center;font-size:14px;color:var(--text);}
+th{background:var(--th);}
+td{background:var(--card);transition:background .3s;}
+tr.rok td{background:#e6f9ed!important;}
+tr.rnok td{background:#fdecea!important;}
+body.dark tr.rok td{background:#0d2e18!important;}
+body.dark tr.rnok td{background:#2e0d0d!important;}
+tr.rc{cursor:pointer;}
+tr.rc:hover td{background:var(--hover)!important;}
+.hi{background:yellow;font-weight:bold;}
+
+/* ── BADGES ── */
+.conf{color:#1a9e3f;font-weight:bold;font-size:15px;animation:pulse 1.5s infinite;}
+.nconf{color:#cc2222;font-weight:bold;font-size:15px;animation:shake .5s;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+/* ── FILTERS ── */
+.filters{margin-top:9px;font-size:14px;}
+.frow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.frow button{margin-top:0;font-size:13px;padding:7px 11px;}
+
+/* ── MODAL BASE ── */
+.ov{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;justify-content:center;align-items:center;}
+.ov.show{display:flex;}
+.mb{background:var(--card);padding:20px;border-radius:14px;max-width:420px;width:94%;font-size:14px;box-shadow:0 10px 40px rgba(0,0,0,.4);animation:fi .25s ease;max-height:92vh;overflow-y:auto;}
+@keyframes fi{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.mb h3{margin-top:0;color:var(--acc);border-bottom:2px solid var(--acc);padding-bottom:7px;}
+.mb table{width:100%;border-collapse:collapse;margin-top:7px;}
+.mb td{padding:6px 9px;border:1px solid var(--border);color:var(--text);background:var(--card);}
+.mb td:first-child{font-weight:bold;background:var(--mod1);width:57%;}
+.mc{background:#dc3545;color:#fff;border:none;padding:9px;border-radius:8px;cursor:pointer;margin-top:12px;font-size:14px;width:100%;}
+.mbtns{display:flex;gap:7px;margin-bottom:7px;}
+.mbtns button{flex:1;margin:0;}
+.bsave{background:#28a745;color:#fff;border-radius:8px;font-size:14px;padding:9px;}
+.bprnt{background:#6c757d;color:#fff;border-radius:8px;font-size:14px;padding:9px;}
+
+/* ── CAPTURE CARD ── */
+.cap-card{background:#fff;border-radius:11px;overflow:hidden;border:1.5px solid #d0ddf0;margin-bottom:11px;}
+.cap-head{background:linear-gradient(135deg,#0064d2,#004aaa);color:#fff;padding:11px 13px 9px;text-align:center;}
+.cap-title{font-size:14px;font-weight:bold;}
+.cap-date{font-size:11px;opacity:.85;margin-top:2px;}
+.cap-foot{background:#f0f4ff;text-align:center;font-size:10px;color:#888;padding:5px;border-top:1px solid #dde5f5;}
+body.dark .cap-card{background:#1e2a3a;border-color:#334466;}
+body.dark .cap-foot{background:#162032;color:#667;}
+
+/* ── PASSWORD MODAL ── */
+.pwd-ov{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:99999;justify-content:center;align-items:center;}
+.pwd-ov.show{display:flex;}
+.pwd-box{background:var(--card);padding:26px 22px;border-radius:14px;max-width:320px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.5);animation:fi .25s ease;text-align:center;}
+.pwd-box h3{margin-top:0;color:#dc3545;}
+.pwd-box p{color:var(--sub);font-size:13px;}
+.pwd-err{color:#dc3545;font-size:12px;margin-top:3px;display:none;}
+.pwd-btns{display:flex;gap:7px;margin-top:9px;}
+.pwd-btns button{flex:1;margin:0;}
+.bpc{background:var(--acc);color:#fff;}
+.bpx{background:#aaa;color:#fff;}
+
+/* ── SETTINGS MODAL ── */
+.set-ov{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:99998;justify-content:center;align-items:center;}
+.set-ov.show{display:flex;}
+.set-box{background:var(--card);padding:20px;border-radius:14px;max-width:420px;width:94%;max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.4);animation:fi .25s ease;}
+.set-box h3{margin-top:0;color:var(--acc);border-bottom:2px solid var(--acc);padding-bottom:7px;}
+.set-sec{margin-top:14px;}
+.set-sec h4{font-size:12px;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;margin:0 0 7px;}
+.set-sec label{font-size:14px;margin-top:6px;}
+.set-sec input{font-size:14px;padding:7px;margin-top:3px;}
+.logo-prev{width:58px;height:58px;border-radius:10px;background:#f0f4ff;display:flex;align-items:center;justify-content:center;font-size:30px;border:2px dashed var(--border);cursor:pointer;overflow:hidden;margin-top:7px;}
+.logo-prev img{width:100%;height:100%;object-fit:contain;}
+.swatches{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;}
+.sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .2s;}
+.sw.on{border-color:#333;transform:scale(1.15);}
+.sw:hover{transform:scale(1.1);}
+
+/* ── GPS STATUS ── */
+#gpsStatus{font-size:12px;color:var(--sub);margin-top:3px;min-height:15px;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);color:#fff;padding:11px 18px;border-radius:11px;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;max-width:90%;text-align:center;white-space:pre-line;display:none;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateX(-50%) translateY(20px)}to{transform:translateX(-50%) translateY(0)}}
+
+@media(max-width:430px){
+  input[type=text],textarea{font-size:18px;}
+  table th,table td{font-size:12px;padding:5px;}
+  .pgrid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- BANNER -->
+<div class="banner" id="banner">
+  <div class="banner-logo" id="bLogo">🏗️</div>
+  <div>
+    <div class="banner-name" id="bName">Mon Entreprise</div>
+    <div class="banner-sub" id="bSub">Essai à la Plaque — EV2</div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <h2>📊 EV2 Essai Plaque</h2>
+  <div class="topbar-btns">
+    <button class="install-btn" id="btnInstall" onclick="installPWA()"><i class="fa-solid fa-download"></i> Installer</button>
+    <button class="icon-btn" onclick="openSettings()" title="Paramètres"><i class="fa-solid fa-gear"></i></button>
+    <button class="icon-btn" onclick="toggleDark()" title="Mode sombre"><i class="fa-solid fa-moon" id="darkIco"></i></button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="sv" id="sTotal">0</div><div class="sl">Total Essais</div></div>
+  <div class="stat" id="sTauxCard"><div class="sv" id="sTaux">-%</div><div class="sl">Taux Conformité</div></div>
+  <div class="stat"><div class="sv" id="sEv2">-</div><div class="sl">Ev2 Moyen (MPa)</div></div>
+  <div class="stat"><div class="sv" id="sK">-</div><div class="sl">K Moyen</div></div>
+</div>
+
+<!-- PROJECT -->
+<div class="project-sec">
+  <div class="sec-title">📁 Informations du Projet</div>
+  <div class="pgrid">
+    <label>Projet / Chantier:<input type="text" id="iProjet" placeholder="Ex: RN1 — Lot 3"></label>
+    <label>N° Essai:<input type="text" id="iNum" readonly style="background:var(--hist);cursor:default;"></label>
+    <label>Couche:
+      <select id="iCouche">
+        <option value="">— Sélectionner —</option>
+        <option>Couche de forme</option>
+        <option>Couche de fondation</option>
+        <option>Couche de base</option>
+        <option>Couche de roulement</option>
+        <option>Remblai</option>
+        <option>Autre</option>
+      </select>
+    </label>
+    <label>PK / Station:<input type="text" id="iPK" placeholder="Ex: PK 12+500"></label>
+  </div>
+</div>
+
+<!-- INPUTS -->
+<label>Charge 0,500:  <input type="text" id="l1" inputmode="decimal"></label>
+<label>Decharge 0,00: <input type="text" id="l2" inputmode="decimal"></label>
+<label>Charge 70,65:  <input type="text" id="l3" inputmode="decimal"></label>
+<label>Decharge 0,00: <input type="text" id="l4" inputmode="decimal"></label>
+<label>Charge 56,52:  <input type="text" id="l5" inputmode="decimal"></label>
+<label>📝 Commentaire:
+  <div style="display:flex;gap:6px;margin-top:5px;">
+    <textarea id="iComment" rows="2" style="flex:1;margin-top:0;font-size:15px;"></textarea>
+    <button onclick="captureGPS()" title="GPS" style="flex-shrink:0;width:44px;align-self:stretch;border-radius:10px;border:none;background:#17a2b8;color:#fff;font-size:17px;cursor:pointer;margin:0;padding:0;" id="gpsBtn">📍</button>
+  </div>
+</label>
+<div id="gpsStatus"></div>
+
+<!-- ACTION BUTTONS -->
+<div class="btn-row" style="margin-top:8px;">
+  <button class="bc" onclick="calculate()"><i class="fa-solid fa-calculator"></i> Calculer</button>
+  <button class="bn" onclick="resetForm()"><i class="fa-solid fa-plus"></i> Nouveau</button>
+</div>
+<div class="exp-row">
+  <button class="bp" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Exporter PDF</button>
+  <button class="bx" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
+</div>
+
+<!-- RESULT CARD -->
+<div class="res-card" id="resCard">
+  <div class="res-head" id="resHead">
+    <span id="resTitle">Résultat</span>
+    <span id="resBadge"></span>
+  </div>
+  <div class="res-body">
+    <div class="res-vals">
+      <div class="rv"><div class="rl">Ev1 (MPa)</div><div class="rn" id="rEv1" style="color:#6c63ff;">—</div></div>
+      <div class="rv"><div class="rl">Ev2 (MPa)</div><div class="rn" id="rEv2" style="color:#007BFF;">—</div></div>
+      <div class="rv"><div class="rl">K</div><div class="rn" id="rK"  style="color:#17a2b8;">—</div></div>
+    </div>
+    <div id="resInterp"></div>
+  </div>
+</div>
+
+<!-- CHART -->
+<div class="chart-sec" id="chartSec">
+  <h4>📈 Évolution Ev2 (MPa)</h4>
+  <div class="chart-wrap"><canvas id="ev2Chart"></canvas></div>
+</div>
+
+<!-- HISTORY -->
+<div class="history">
+  <h3>📜 Historique des Résultats</h3>
+  <div class="filters">
+    <label style="font-size:14px;">🔎 Recherche: <input type="text" id="iSearch" oninput="doSearch()" placeholder="Chercher dans les commentaires..."></label>
+    <div class="frow">
+      <label style="flex:1;font-size:14px;margin-top:6px;">📆 De:<input type="date" id="iFrom"></label>
+      <label style="flex:1;font-size:14px;margin-top:6px;">📆 À: <input type="date" id="iTo"></label>
+    </div>
+    <div class="frow">
+      <button onclick="filterDate()"><i class="fa-solid fa-filter"></i> Filtrer</button>
+      <button onclick="resetFilter()"><i class="fa-solid fa-rotate-left"></i> Réinit.</button>
+    </div>
+  </div>
+  <table id="hTable">
+    <thead><tr><th>#</th><th>Date</th><th>Projet</th><th>Ev1</th><th>Ev2</th><th>K</th><th>Commentaire</th><th>Conformité</th><th>Action</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- MODAL DETAILS -->
+<div class="ov" id="detailOv" onclick="if(event.target===this)closeDetail()">
+  <div class="mb">
+    <h3>🔍 Détails du Calcul</h3>
+    <div class="cap-card" id="capCard">
+      <div class="cap-head">
+        <div class="cap-title" id="capTitle">📊 Essai à la Plaque — EV2</div>
+        <div class="cap-date" id="capDate"></div>
+      </div>
+      <table id="detailTable"><tbody></tbody></table>
+      <div class="cap-foot" id="capFoot">EV2 Essai Plaque</div>
+    </div>
+    <div class="mbtns">
+      <button class="bsave" onclick="saveImage()"><i class="fa-solid fa-image"></i> Sauvegarder</button>
+      <button class="bprnt" onclick="printDetail()"><i class="fa-solid fa-print"></i> Imprimer</button>
+    </div>
+    <button class="mc" onclick="closeDetail()">✖ Fermer</button>
+  </div>
+</div>
+
+<!-- MODAL PASSWORD -->
+<div class="pwd-ov" id="pwdOv">
+  <div class="pwd-box">
+    <h3>🔒 Confirmation</h3>
+    <p>Entrez le mot de passe pour supprimer.</p>
+    <input type="password" id="pwdInp" inputmode="numeric" placeholder="Mot de passe..." onkeydown="if(event.key==='Enter')confirmDel()">
+    <div class="pwd-err" id="pwdErr">❌ Mot de passe incorrect !</div>
+    <div class="pwd-btns">
+      <button class="bpx" onclick="cancelDel()">Annuler</button>
+      <button class="bpc" onclick="confirmDel()"><i class="fa-solid fa-trash"></i> Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="set-ov" id="setOv" onclick="if(event.target===this)closeSettings()">
+  <div class="set-box">
+    <h3>⚙️ Paramètres</h3>
+    <div class="set-sec">
+      <h4>🏢 Entreprise</h4>
+      <label>Nom: <input type="text" id="sCName" placeholder="Ex: BTP Solutions"></label>
+      <label>Sous-titre: <input type="text" id="sCsub" placeholder="Ex: Contrôle Qualité"></label>
+      <label>Logo (cliquer):
+        <div class="logo-prev" id="logoPrev" onclick="document.getElementById('logoFile').click()">🏗️</div>
+        <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="loadLogo(this)">
+      </label>
+    </div>
+    <div class="set-sec">
+      <h4>🎨 Couleur principale</h4>
+      <div class="swatches">
+        <div class="sw on"  style="background:#007BFF" data-c="#007BFF" onclick="pickColor(this)"></div>
+        <div class="sw"     style="background:#28a745" data-c="#28a745" onclick="pickColor(this)"></div>
+        <div class="sw"     style="background:#dc3545" data-c="#dc3545" onclick="pickColor(this)"></div>
+        <div class="sw"     style="background:#6f42c1" data-c="#6f42c1" onclick="pickColor(this)"></div>
+        <div class="sw"     style="background:#fd7e14" data-c="#fd7e14" onclick="pickColor(this)"></div>
+        <div class="sw"     style="background:#20c997" data-c="#20c997" onclick="pickColor(this)"></div>
+        <div class="sw"     style="background:#343a40" data-c="#343a40" onclick="pickColor(this)"></div>
+      </div>
+    </div>
+    <div class="set-sec">
+      <h4>🔒 Sécurité</h4>
+      <label>Nouveau mot de passe: <input type="password" id="sNewPwd" inputmode="numeric" placeholder="Laisser vide = inchangé"></label>
+      <label>Confirmer: <input type="password" id="sConfPwd" inputmode="numeric" placeholder="Confirmer..."></label>
+    </div>
+    <div class="set-sec">
+      <h4>⚠️ Données</h4>
+      <button onclick="clearAll()" style="background:#dc3545;color:#fff;width:100%;border-radius:8px;padding:9px;font-size:14px;margin-top:0;"><i class="fa-solid fa-trash"></i> Effacer tout l'historique</button>
+    </div>
+    <button onclick="saveSettings()" style="background:var(--acc);color:#fff;width:100%;border-radius:8px;padding:11px;font-size:14px;margin-top:14px;"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+    <button onclick="closeSettings()" style="background:#aaa;color:#fff;width:100%;border-radius:8px;padding:9px;font-size:14px;margin-top:7px;">Annuler</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════
+//  STATE
+// ══════════════════════════════
+let hist = JSON.parse(localStorage.getItem("ev2hist") || "[]");
+let cfg  = Object.assign({name:"Mon Entreprise",sub:"Essai à la Plaque — EV2",color:"#007BFF",pwd:"1234",logo:null},
+  JSON.parse(localStorage.getItem("ev2cfg") || "{}"));
+let pendIdx = null;
+let chartInst = null;
+let deferredPrompt = null;
+let lastGPS = null;
+
+// ══════════════════════════════
+//  INIT
+// ══════════════════════════════
+applyConfig();
+renderHistory();
+updateStats();
+updateChart();
+document.getElementById("iNum").value = "N° " + (hist.length + 1);
+
+// ══════════════════════════════
+//  PWA
+// ══════════════════════════════
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById("btnInstall").classList.add("show");
+});
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; document.getElementById("btnInstall").classList.remove("show"); });
+}
+try {
+  const mb = new Blob([JSON.stringify({name:"EV2 Plaque",short_name:"EV2",start_url:".",display:"standalone",background_color:"#f0f4ff",theme_color:"#007BFF"})],{type:"application/json"});
+  document.getElementById("manifestLink").href = URL.createObjectURL(mb);
+} catch(e){}
+
+// ══════════════════════════════
+//  DARK MODE
+// ══════════════════════════════
+function toggleDark() {
+  const d = document.body.classList.toggle("dark");
+  document.getElementById("darkIco").className = d ? "fa-solid fa-sun" : "fa-solid fa-moon";
+  localStorage.setItem("ev2dark", d ? "1" : "0");
+}
+if (localStorage.getItem("ev2dark") === "1") {
+  document.body.classList.add("dark");
+  document.getElementById("darkIco").className = "fa-solid fa-sun";
+}
+
+// ══════════════════════════════
+//  CONFIG / SETTINGS
+// ══════════════════════════════
+function applyConfig() {
+  document.getElementById("bName").textContent = cfg.name;
+  document.getElementById("bSub").textContent  = cfg.sub;
+  document.getElementById("capFoot").textContent = cfg.name;
+  document.documentElement.style.setProperty("--acc", cfg.color);
+  document.getElementById("banner").style.borderLeftColor = cfg.color;
+  const logo = document.getElementById("bLogo");
+  logo.innerHTML = cfg.logo ? `<img src="${cfg.logo}" alt="logo">` : "🏗️";
+}
+function openSettings() {
+  document.getElementById("sCName").value = cfg.name;
+  document.getElementById("sCsub").value  = cfg.sub;
+  document.getElementById("sNewPwd").value = "";
+  document.getElementById("sConfPwd").value = "";
+  const lp = document.getElementById("logoPrev");
+  lp.innerHTML = cfg.logo ? `<img src="${cfg.logo}" alt="logo">` : "🏗️";
+  document.querySelectorAll(".sw").forEach(s => s.classList.toggle("on", s.dataset.c === cfg.color));
+  document.getElementById("setOv").classList.add("show");
+}
+function closeSettings() { document.getElementById("setOv").classList.remove("show"); }
+function saveSettings() {
+  const np = document.getElementById("sNewPwd").value;
+  const cp = document.getElementById("sConfPwd").value;
+  if (np && np !== cp) { toast("❌ Les mots de passe ne correspondent pas","#dc3545"); return; }
+  cfg.name  = document.getElementById("sCName").value || cfg.name;
+  cfg.sub   = document.getElementById("sCsub").value  || cfg.sub;
+  if (np) cfg.pwd = np;
+  localStorage.setItem("ev2cfg", JSON.stringify(cfg));
+  applyConfig();
+  closeSettings();
+  toast("✅ Paramètres enregistrés","#28a745");
+}
+function pickColor(el) {
+  cfg.color = el.dataset.c;
+  document.querySelectorAll(".sw").forEach(s => s.classList.remove("on"));
+  el.classList.add("on");
+  document.documentElement.style.setProperty("--acc", cfg.color);
+  document.getElementById("banner").style.borderLeftColor = cfg.color;
+}
+function loadLogo(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => { cfg.logo = e.target.result; document.getElementById("logoPrev").innerHTML = `<img src="${cfg.logo}" alt="logo">`; };
+  r.readAsDataURL(f);
+}
+function clearAll() {
+  if (!confirm("⚠️ Effacer tout l'historique ?")) return;
+  hist = []; localStorage.setItem("ev2hist", "[]");
+  renderHistory(); updateStats(); updateChart();
+  closeSettings(); toast("🗑️ Historique effacé","#6c757d");
+}
+
+// ══════════════════════════════
+//  CALCULATE
+// ══════════════════════════════
+function pv(id) { return parseFloat(document.getElementById(id).value.replace(",",".")) || 0; }
+
+function calculate() {
+  const l1=pv("l1"),l2=pv("l2"),l3=pv("l3"),l4=pv("l4"),l5=pv("l5");
+  const comment = document.getElementById("iComment").value;
+  const projet  = document.getElementById("iProjet").value;
+  const couche  = document.getElementById("iCouche").value;
+  const pk      = document.getElementById("iPK").value;
+  const numEss  = hist.length + 1;
+
+  // Validation
+  const errs = [];
+  if (!l1&&!l2&&!l3&&!l4&&!l5) errs.push("⛔ Aucune valeur saisie !");
+  if (l2>l1&&l1!==0)   errs.push("⚠️ L2 > L1 — vérifiez Décharge L2");
+  if (l3<l2&&l3!==0)   errs.push("⚠️ L3 < L2 — vérifiez Charge L3");
+  if (l4>l5&&l4!==0)   errs.push("⚠️ L4 > L5 — vérifiez Décharge L4");
+  if (errs.length) { toast(errs.join("\n"),"#dc3545"); return; }
+
+  const A=l3-l2, C=A*2, B=l5-l4, D=B*2;
+  if (C===0||D===0) { toast("⚠️ Division par zéro !","#dc3545"); return; }
+
+  const Ev1f = 1125/C, Ev2f = 900/D, Kf = Ev2f/Ev1f;
+  const Ev1  = Ev1f.toFixed(2), Ev2 = Ev2f.toFixed(2), K = Kf.toFixed(2);
+  const isOk = Ev2f>=120 && Kf>=1.2 && Kf<=2.2;
+  const conformity = isOk
+    ? '<span class="conf">✅ Conforme</span>'
+    : '<span class="nconf">❌ Non Conforme</span>';
+
+  // K interpretation
+  let kMsg="", kClr="#555";
+  if (Kf<1.2)       { kMsg="🔴 K trop faible — Sol peu portant"; kClr="#cc2222"; }
+  else if (Kf<1.5)  { kMsg="🟡 K correct — Compactage acceptable"; kClr="#b8860b"; }
+  else if (Kf<=2.2) { kMsg="🟢 K excellent — Bon compactage"; kClr="#1a7a3c"; }
+  else              { kMsg="🔴 K trop élevé — Mesure suspecte"; kClr="#cc2222"; }
+
+  const warnSeuil = Ev2f>=110&&Ev2f<120
+    ? `<div style="margin:7px 0 0;padding:6px 9px;background:#fff3cd;border-left:4px solid #f0a500;border-radius:6px;font-size:13px;color:#7a5000;">⚠️ Ev2 proche du seuil (${Ev2} / min 120 MPa)</div>`
+    : "";
+
+  // Update result card
+  const head = document.getElementById("resHead");
+  head.style.background = isOk
+    ? "linear-gradient(135deg,#1a7a3c,#28a745)"
+    : "linear-gradient(135deg,#9b1a1a,#dc3545)";
+  document.getElementById("resTitle").textContent = isOk ? "✅ Résultat Conforme" : "❌ Non Conforme";
+  document.getElementById("resBadge").textContent = `Essai N°${numEss}`;
+  document.getElementById("resInterp").innerHTML =
+    `<div style="padding:6px 9px;background:${kClr}18;border-left:4px solid ${kClr};border-radius:6px;font-size:13px;color:${kClr};margin-top:4px;">${kMsg}</div>${warnSeuil}`;
+
+  const rc = document.getElementById("resCard");
+  rc.classList.add("show");
+
+  // Animate numbers
+  animNum("rEv1", Ev1f, 2, 600);
+  animNum("rEv2", Ev2f, 2, 800);
+  animNum("rK",   Kf,   2, 700);
+  document.getElementById("rEv2").style.color = Ev2f>=120 ? "#28a745" : "#dc3545";
+  document.getElementById("rK").style.color   = (Kf>=1.2&&Kf<=2.2) ? "#28a745" : "#dc3545";
+
+  // Save
+  hist.push({
+    date: new Date().toLocaleString(), Ev1, Ev2, K, comment, conformity,
+    kMsg, isOk, projet, couche, pk, numEss, gps: lastGPS,
+    d: {l1,l2,l3,l4,l5,A:A.toFixed(4),C:C.toFixed(4),B:B.toFixed(4),D:D.toFixed(4)}
+  });
+  localStorage.setItem("ev2hist", JSON.stringify(hist));
+  document.getElementById("iNum").value = "N° " + (hist.length + 1);
+  renderHistory(); updateStats(); updateChart();
+}
+
+function animNum(id, target, dec, dur) {
+  const el = document.getElementById(id);
+  let step=0; const steps=dur/16;
+  const t = setInterval(() => {
+    step++;
+    el.textContent = (target*(step/steps)).toFixed(dec);
+    if (step>=steps) { el.textContent=target.toFixed(dec); clearInterval(t); }
+  }, 16);
+}
+
+// ══════════════════════════════
+//  RESET FORM
+// ══════════════════════════════
+function resetForm() {
+  ["l1","l2","l3","l4","l5","iComment","iProjet","iPK"].forEach(id => document.getElementById(id).value="");
+  document.getElementById("iCouche").selectedIndex = 0;
+  document.getElementById("resCard").classList.remove("show");
+  document.getElementById("gpsStatus").textContent = "";
+  document.getElementById("iNum").value = "N° " + (hist.length + 1);
+  lastGPS = null;
+}
+
+// ══════════════════════════════
+//  GPS
+// ══════════════════════════════
+function captureGPS() {
+  if (!navigator.geolocation) { toast("GPS non supporté","#dc3545"); return; }
+  const btn = document.getElementById("gpsBtn");
+  const st  = document.getElementById("gpsStatus");
+  btn.textContent = "⏳";
+  st.textContent  = "Localisation…";
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat=pos.coords.latitude.toFixed(6), lon=pos.coords.longitude.toFixed(6), acc=Math.round(pos.coords.accuracy);
+      lastGPS = {lat,lon,acc};
+      const txt = `📍 GPS: ${lat}, ${lon} (±${acc}m)`;
+      const c = document.getElementById("iComment");
+      c.value = c.value ? c.value+"\n"+txt : txt;
+      st.innerHTML = `✅ <a href="https://maps.google.com/?q=${lat},${lon}" target="_blank" style="color:#17a2b8;">Voir sur carte</a> ±${acc}m`;
+      btn.textContent = "✅"; setTimeout(()=>btn.textContent="📍",2000);
+      toast(`📍 Position capturée (±${acc}m)`,"#17a2b8");
+    },
+    err => { btn.textContent="📍"; st.textContent=""; const m={1:"Accès refusé",2:"Indisponible",3:"Délai dépassé"}; toast("❌ "+(m[err.code]||"Erreur GPS"),"#dc3545"); },
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
+
+// ══════════════════════════════
+//  RENDER HISTORY
+// ══════════════════════════════
+function renderHistory(data=hist) {
+  const tb = document.querySelector("#hTable tbody");
+  tb.innerHTML = "";
+  data.forEach((r,i) => {
+    const ri = hist.indexOf(r) >= 0 ? hist.indexOf(r) : i;
+    const ok = r.isOk;
+    const tr = document.createElement("tr");
+    tr.className = "rc " + (ok?"rok":"rnok");
+    tr.title = "Cliquez pour les détails";
+    tr.onclick = () => openDetail(ri);
+    tr.innerHTML = `<td>${i+1}</td><td style="font-size:12px">${r.date}</td><td style="font-size:12px">${r.projet||"-"}</td><td>${r.Ev1}</td><td style="font-weight:bold;color:${parseFloat(r.Ev2)>=120?"#1a9e3f":"#cc2222"}">${r.Ev2}</td><td>${r.K}</td><td style="font-size:12px">${r.comment||"-"}</td><td>${r.conformity}</td><td><button class="bd" onclick="event.stopPropagation();askDel(${ri})"><i class="fa-solid fa-trash"></i></button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ══════════════════════════════
+//  DETAIL MODAL
+// ══════════════════════════════
+function openDetail(i) {
+  const r = hist[i]; if (!r) return;
+  const d = r.d||{};
+  const rows = [
+    ["📅 Date",         r.date],
+    ...(r.numEss ? [["🔢 N° Essai","N° "+r.numEss]] : []),
+    ...(r.projet  ? [["📁 Projet",  r.projet]] : []),
+    ...(r.couche  ? [["🏗️ Couche", r.couche]] : []),
+    ...(r.pk      ? [["📍 PK",     r.pk]]     : []),
+    ["📝 Commentaire",  r.comment||"-"],
+    ["_Lectures",""],
+    ["L1 Charge 0,500", d.l1??"-"],
+    ["L2 Decharge 0,00",d.l2??"-"],
+    ["L3 Charge 70,65", d.l3??"-"],
+    ["L4 Decharge 0,00",d.l4??"-"],
+    ["L5 Charge 56,52", d.l5??"-"],
+    ["_Calculs",""],
+    ["A = L3−L2", d.A??"-"],["C = A×2", d.C??"-"],
+    ["B = L5−L4", d.B??"-"],["D = B×2", d.D??"-"],
+    ["_Résultats",""],
+    ["Ev1 = 1125/C (MPa)", r.Ev1],
+    ["Ev2 = 900/D (MPa)",  r.Ev2],
+    ["K = Ev2/Ev1",        r.K],
+    ["Conformité", r.isOk ? "✅ Conforme" : "❌ Non Conforme"],
+    ...(r.kMsg ? [["Interprétation K", r.kMsg.replace(/🔴|🟡|🟢/g,"").trim()]] : []),
+    ...(r.gps  ? [["_GPS",""],["Coordonnées",`${r.gps.lat}, ${r.gps.lon}`],["Précision",`±${r.gps.acc}m`],["Carte",`<a href="https://maps.google.com/?q=${r.gps.lat},${r.gps.lon}" target="_blank" style="color:#007BFF">Google Maps</a>`]] : []),
+  ];
+  document.querySelector("#detailTable tbody").innerHTML = rows.map(([l,v]) =>
+    l.startsWith("_")
+      ? `<tr><td colspan="2" style="background:var(--acc);color:#fff;text-align:center;font-weight:bold;padding:5px">── ${l.slice(1)} ──</td></tr>`
+      : `<tr><td>${l}</td><td>${v}</td></tr>`
+  ).join("");
+  document.getElementById("capDate").textContent = r.date;
+  document.getElementById("capTitle").textContent = `${cfg.name} — EV2`;
+  document.getElementById("detailOv").classList.add("show");
+}
+function closeDetail() { document.getElementById("detailOv").classList.remove("show"); }
+
+// ══════════════════════════════
+//  SAVE IMAGE / PRINT
+// ══════════════════════════════
+function saveImage() {
+  const card = document.getElementById("capCard");
+  const wasDark = document.body.classList.contains("dark");
+  if (wasDark) document.body.classList.remove("dark");
+  html2canvas(card,{scale:2.5,backgroundColor:"#fff",logging:false}).then(canvas => {
+    if (wasDark) document.body.classList.add("dark");
+    canvas.toBlob(blob => {
+      const f = new File([blob],"EV2.png",{type:"image/png"});
+      if (navigator.share && navigator.canShare && navigator.canShare({files:[f]})) {
+        navigator.share({title:"Résultat EV2",files:[f]}).catch(()=>dlImage(canvas));
+      } else dlImage(canvas);
+    },"image/png");
+  });
+}
+function dlImage(canvas) {
+  const a=document.createElement("a");
+  a.download="EV2_"+new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")+".png";
+  a.href=canvas.toDataURL("image/png"); a.click();
+}
+function printDetail() {
+  const dt = document.querySelector("#detailTable").outerHTML;
+  const w = window.open("","_blank","width=480,height=700");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>EV2</title>
+  <style>body{font-family:Arial;margin:20px;color:#222}.hd{background:linear-gradient(135deg,#0064d2,#004aaa);color:#fff;padding:12px;border-radius:8px 8px 0 0;text-align:center}.hd h2{margin:0;font-size:15px}.hd p{margin:3px 0 0;font-size:11px;opacity:.85}table{width:100%;border-collapse:collapse}td{padding:6px 9px;border:1px solid #ddd;font-size:12px}td:first-child{background:#f0f4ff;font-weight:bold;width:55%}.sr td{background:#007BFF!important;color:#fff;text-align:center;font-weight:bold}.ft{background:#f0f4ff;text-align:center;font-size:10px;color:#999;padding:5px;border-top:1px solid #ddd;border-radius:0 0 8px 8px}</style>
+  </head><body><div class="hd"><h2>📊 ${cfg.name} — EV2</h2><p>${document.getElementById("capDate").textContent}</p></div>
+  ${dt}<div class="ft">${cfg.name}</div></body></html>`);
+  w.document.close(); w.focus();
+  setTimeout(()=>{w.print();w.close();},400);
+}
+
+// ══════════════════════════════
+//  DELETE
+// ══════════════════════════════
+function askDel(i) {
+  pendIdx = i;
+  document.getElementById("pwdInp").value = "";
+  document.getElementById("pwdErr").style.display = "none";
+  document.getElementById("pwdOv").classList.add("show");
+  setTimeout(()=>document.getElementById("pwdInp").focus(),100);
+}
+function cancelDel() { pendIdx=null; document.getElementById("pwdOv").classList.remove("show"); }
+function confirmDel() {
+  if (document.getElementById("pwdInp").value !== cfg.pwd) {
+    document.getElementById("pwdErr").style.display="block";
+    document.getElementById("pwdInp").value=""; return;
+  }
+  document.getElementById("pwdOv").classList.remove("show");
+  if (pendIdx!==null) { hist.splice(pendIdx,1); localStorage.setItem("ev2hist",JSON.stringify(hist)); renderHistory(); updateStats(); updateChart(); pendIdx=null; }
+}
+
+// ══════════════════════════════
+//  SEARCH / FILTER
+// ══════════════════════════════
+function doSearch() {
+  const q = document.getElementById("iSearch").value.toLowerCase();
+  Array.from(document.querySelector("#hTable tbody").rows).forEach(row => {
+    const c = row.cells[6]; if (!c) return;
+    const t = c.innerText.toLowerCase();
+    row.style.display = t.includes(q) ? "" : "none";
+    c.innerHTML = c.innerHTML.replace(/<span class="hi">(.*?)<\/span>/g,"$1");
+    if (q&&t.includes(q)) c.innerHTML = c.innerHTML.replace(new RegExp(`(${q})`,"gi"),`<span class="hi">$1</span>`);
+  });
+}
+function filterDate() {
+  const f=document.getElementById("iFrom").value, t=document.getElementById("iTo").value;
+  if (!f&&!t) { toast("⚠️ Choisissez une plage de dates","#dc3545"); return; }
+  renderHistory(hist.filter(r=>{
+    const p=r.date.split(",")[0].split("/");
+    const d=new Date(p[2],p[1]-1,p[0]);
+    if (f&&d<new Date(f)) return false;
+    if (t&&d>new Date(t)) return false;
+    return true;
+  }));
+}
+function resetFilter() {
+  document.getElementById("iSearch").value=document.getElementById("iFrom").value=document.getElementById("iTo").value="";
+  renderHistory();
+}
+
+// ══════════════════════════════
+//  STATS
+// ══════════════════════════════
+function updateStats() {
+  const n=hist.length;
+  if (!n) {
+    ["sTotal","sTaux","sEv2","sK"].forEach(id=>document.getElementById(id).textContent=id==="sTotal"?"0":"-");
+    document.getElementById("sTauxCard").className="stat"; return;
+  }
+  const ok=hist.filter(r=>r.isOk).length;
+  const taux=((ok/n)*100).toFixed(0);
+  document.getElementById("sTotal").textContent=n;
+  document.getElementById("sTaux").textContent=taux+"%";
+  document.getElementById("sEv2").textContent=(hist.reduce((s,r)=>s+parseFloat(r.Ev2),0)/n).toFixed(1);
+  document.getElementById("sK").textContent=(hist.reduce((s,r)=>s+parseFloat(r.K),0)/n).toFixed(2);
+  document.getElementById("sTauxCard").className="stat "+(parseFloat(taux)>=80?"ok":"nok");
+}
+
+// ══════════════════════════════
+//  CHART
+// ══════════════════════════════
+function updateChart() {
+  const sec = document.getElementById("chartSec");
+  if (hist.length < 2) { sec.classList.remove("show"); return; }
+  sec.classList.add("show");
+  const isDark = document.body.classList.contains("dark");
+  const tc = isDark?"#e0e8ff":"#333", gc=isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.08)";
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(document.getElementById("ev2Chart").getContext("2d"),{
+    type:"line",
+    data:{
+      labels: hist.map((_,i)=>"#"+(i+1)),
+      datasets:[{
+        label:"Ev2 (MPa)",
+        data: hist.map(r=>parseFloat(r.Ev2)),
+        borderColor: cfg.color, backgroundColor: cfg.color+"22",
+        pointBackgroundColor: hist.map(r=>r.isOk?"#28a745":"#dc3545"),
+        pointRadius:6, tension:.3, fill:true
+      },{
+        label:"Seuil 120 MPa",
+        data: Array(hist.length).fill(120),
+        borderColor:"#dc3545", borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:tc,font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:tc},grid:{color:gc}},
+        y:{ticks:{color:tc},grid:{color:gc},suggestedMin:80,suggestedMax:Math.max(...hist.map(r=>parseFloat(r.Ev2)),150)}
+      }
+    }
+  });
+}
+
+// ══════════════════════════════
+//  TOAST
+// ══════════════════════════════
+function toast(msg, bg="#007BFF") {
+  const el = document.getElementById("toast");
+  el.textContent=msg; el.style.background=bg; el.style.display="block";
+  clearTimeout(el._t); el._t=setTimeout(()=>el.style.display="none",3500);
+}
+
+// ══════════════════════════════
+//  EXPORT PDF
+// ══════════════════════════════
+function hexRGB(h){const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);return r?[parseInt(r[1],16),parseInt(r[2],16),parseInt(r[3],16)]:[0,123,255];}
+function stamp(doc,x,y,ok){
+  const cl=ok?[0,130,60]:[190,0,0];
+  doc.setDrawColor(...cl);doc.setLineWidth(.7);
+  doc.circle(x,y,7,"S");doc.circle(x,y,5.5,"S");
+  doc.setTextColor(...cl);doc.setFontSize(ok?5:4.5);doc.setFont("helvetica","bold");
+  doc.text(ok?"APPROUVE":"NON",x,y+(ok?1.5:-0.3),{align:"center"});
+  if(!ok)doc.text("CONFORME",x,y+2.5,{align:"center"});
+  doc.setFont("helvetica","normal");
+}
+function exportPDF() {
+  if (!hist.length){toast("⚠️ Aucun résultat !","#dc3545");return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  const W=doc.internal.pageSize.getWidth();
+  const n=hist.length, ok=hist.filter(r=>r.isOk).length;
+  const taux=((ok/n)*100).toFixed(1);
+  const ev2Moy=(hist.reduce((s,r)=>s+parseFloat(r.Ev2),0)/n).toFixed(2);
+  const ev2Max=Math.max(...hist.map(r=>parseFloat(r.Ev2))).toFixed(2);
+  const ev2Min=Math.min(...hist.map(r=>parseFloat(r.Ev2))).toFixed(2);
+  const ac=hexRGB(cfg.color), acd=ac.map(c=>Math.max(0,c-40));
+
+  // Header
+  doc.setFillColor(...ac); doc.rect(0,0,W,30,"F");
+  doc.setFillColor(...acd); doc.rect(0,26,W,4,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(7);doc.setFont("helvetica","normal");
+  doc.text(cfg.name.toUpperCase(),14,8);
+  doc.setFontSize(17);doc.setFont("helvetica","bold");
+  doc.text("RAPPORT D'ESSAI À LA PLAQUE",W/2,17,{align:"center"});
+  doc.setFontSize(9);doc.setFont("helvetica","normal");
+  doc.text("Calcul EV1 / EV2 — Contrôle de Compactage",W/2,23,{align:"center"});
+
+  doc.setTextColor(80,80,80);doc.setFontSize(8);
+  doc.text(`Généré le : ${new Date().toLocaleString("fr-FR")}`,14,36);
+  doc.text(cfg.name,W-14,36,{align:"right"});
+  doc.setDrawColor(...ac);doc.setLineWidth(.4);doc.line(14,39,W-14,39);
+
+  let sy=42;
+  const C4=[{l:"Total",v:String(n),c:[0,100,210]},{l:"Conformes",v:String(ok),c:[22,160,70]},{l:"Non conf.",v:String(n-ok),c:[200,50,50]},{l:"Taux",v:taux+"%",c:parseFloat(taux)>=80?[22,160,70]:[200,50,50]}];
+  const cw=(W-28-9)/4;
+  C4.forEach((c,i)=>{const cx=14+i*(cw+3);doc.setFillColor(...c.c);doc.roundedRect(cx,sy,cw,16,2,2,"F");doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");doc.text(c.v,cx+cw/2,sy+8,{align:"center"});doc.setFontSize(7);doc.setFont("helvetica","normal");doc.text(c.l,cx+cw/2,sy+13.5,{align:"center"});});
+  sy+=20;
+  const C3=[{l:"Ev2 Moyen",v:ev2Moy,c:[80,60,180]},{l:"Ev2 Max",v:ev2Max,c:[0,140,130]},{l:"Ev2 Min",v:ev2Min,c:[180,100,0]}];
+  const cw2=(W-28-6)/3;
+  C3.forEach((c,i)=>{const cx=14+i*(cw2+3);doc.setFillColor(...c.c);doc.roundedRect(cx,sy,cw2,14,2,2,"F");doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont("helvetica","bold");doc.text(c.v,cx+cw2/2,sy+7,{align:"center"});doc.setFontSize(7);doc.setFont("helvetica","normal");doc.text(c.l,cx+cw2/2,sy+12,{align:"center"});});
+
+  sy+=18;
+  doc.setFillColor(240,244,255);doc.rect(14,sy,W-28,7,"F");
+  doc.setDrawColor(...ac);doc.setLineWidth(.3);doc.rect(14,sy,W-28,7,"S");
+  doc.setTextColor(ac[0]*.6,ac[1]*.6,ac[2]*.6);doc.setFontSize(9);doc.setFont("helvetica","bold");
+  doc.text("DÉTAIL DES ESSAIS",W/2,sy+4.8,{align:"center"});sy+=7;
+
+  doc.autoTable({
+    head:[[{content:"#",styles:{cellWidth:7,halign:"center"}},{content:"Date",styles:{cellWidth:30,halign:"center"}},{content:"Projet",styles:{cellWidth:28,halign:"center"}},{content:"Couche",styles:{cellWidth:22,halign:"center"}},{content:"Ev1\n(MPa)",styles:{cellWidth:15,halign:"center"}},{content:"Ev2\n(MPa)",styles:{cellWidth:15,halign:"center"}},{content:"K",styles:{cellWidth:12,halign:"center"}},{content:"Conformité",styles:{cellWidth:32,halign:"center"}}]],
+    body:hist.map((r,i)=>{
+      const ok=r.isOk;
+      return[{content:i+1,styles:{halign:"center"}},{content:r.date,styles:{halign:"center",fontSize:7}},{content:r.projet||"-",styles:{halign:"left",fontSize:7.5}},{content:r.couche||"-",styles:{halign:"left",fontSize:7.5}},{content:r.Ev1,styles:{halign:"center"}},{content:r.Ev2,styles:{halign:"center",fontStyle:"bold",textColor:parseFloat(r.Ev2)>=120?[0,120,60]:[180,0,0]}},{content:r.K,styles:{halign:"center"}},{content:ok?"✔ Conforme":"✘ Non Conforme",styles:{halign:"center",fontStyle:"bold",textColor:ok?[0,130,60]:[190,0,0],fillColor:ok?[230,255,240]:[255,235,235]}}];
+    }),
+    startY:sy,margin:{left:14,right:14},
+    styles:{fontSize:8,cellPadding:2.5,lineColor:[200,210,230],lineWidth:.2},
+    headStyles:{fillColor:ac,textColor:255,fontStyle:"bold",fontSize:8,halign:"center"},
+    alternateRowStyles:{fillColor:[247,250,255]},
+    didDrawCell(data){
+      if(data.section==="body"&&data.column.index===7){
+        const r=hist[data.row.index]; if(!r) return;
+        stamp(doc,data.cell.x+data.cell.width/2,data.cell.y+data.cell.height/2,r.isOk);
+      }
+    }
+  });
+
+  const pages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);const pH=doc.internal.pageSize.getHeight();
+    doc.setFillColor(...ac);doc.rect(0,pH-10,W,10,"F");
+    doc.setTextColor(255,255,255);doc.setFontSize(7.5);doc.setFont("helvetica","normal");
+    doc.text(`${cfg.name} — EV2 Rapport`,14,pH-3.5);
+    doc.text(`Page ${p}/${pages}`,W-14,pH-3.5,{align:"right"});
+  }
+  doc.save("Rapport_EV2_"+new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")+".pdf");
+}
+
+// ══════════════════════════════
+//  EXPORT EXCEL
+// ══════════════════════════════
+function exportExcel() {
+  if (!hist.length){toast("⚠️ Aucun résultat !","#dc3545");return;}
+  const data=[["#","Date","Projet","Couche","PK","L1","L2","L3","L4","L5","A","C","B","D","Ev1","Ev2","K","Commentaire","Conformité"]];
+  hist.forEach((r,i)=>{const d=r.d||{};data.push([i+1,r.date,r.projet||"-",r.couche||"-",r.pk||"-",d.l1??"-",d.l2??"-",d.l3??"-",d.l4??"-",d.l5??"-",d.A??"-",d.C??"-",d.B??"-",d.D??"-",r.Ev1,r.Ev2,r.K,r.comment||"-",r.isOk?"Conforme":"Non Conforme"]);});
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws["!cols"]=[{wch:4},{wch:18},{wch:18},{wch:16},{wch:12},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:10},{wch:10},{wch:8},{wch:20},{wch:14}];
+  const n=hist.length, ok=hist.filter(r=>r.isOk).length;
+  const wsS=XLSX.utils.aoa_to_sheet([["Statistiques",""],["Total",n],["Conformes",ok],["Non Conformes",n-ok],["Taux",((ok/n)*100).toFixed(1)+"%"],["Ev2 Moyen",(hist.reduce((s,r)=>s+parseFloat(r.Ev2),0)/n).toFixed(2)],["K Moyen",(hist.reduce((s,r)=>s+parseFloat(r.K),0)/n).toFixed(3)],["Date",new Date().toLocaleString()]]);
+  wsS["!cols"]=[{wch:18},{wch:14}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"EV2 Résultats");
+  XLSX.utils.book_append_sheet(wb,wsS,"Statistiques");
+  XLSX.writeFile(wb,"EV2_"+new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")+".xlsx");
+}
+</script>
+</body>
+</html>
